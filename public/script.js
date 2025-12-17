@@ -399,6 +399,7 @@ window.renderEntregas = function() {
                         <th>Valor NF</th>
                         <th>Valor Frete</th>
                         <th>Data Entrega</th>
+                        <th style="text-align: center;">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -412,6 +413,9 @@ window.renderEntregas = function() {
                             <td><strong>R$ ${parseFloat(e.valor_nf).toFixed(2)}</strong></td>
                             <td>R$ ${parseFloat(e.valor_frete).toFixed(2)}</td>
                             <td>${formatDate(e.previsao_entrega)}</td>
+                            <td style="text-align: center;">
+                                <button onclick="viewEntrega('${e.id}')" class="action-btn view">Ver</button>
+                            </td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -468,6 +472,7 @@ window.renderLiquidadas = function() {
                         <th>Data Vencimento</th>
                         <th>Data Pagamento</th>
                         <th>Tipo</th>
+                        <th style="text-align: center;">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -481,6 +486,9 @@ window.renderLiquidadas = function() {
                             <td>${formatDate(l.data_vencimento)}</td>
                             <td>${formatDate(l.data_pagamento)}</td>
                             <td>${l.tipo_nf}</td>
+                            <td style="text-align: center;">
+                                <button onclick="viewLiquidada('${l.id}')" class="action-btn view">Ver</button>
+                            </td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -488,6 +496,140 @@ window.renderLiquidadas = function() {
         </div>
     `;
 };
+
+// ============================================
+// MODAIS DE VISUALIZAÇÃO
+// ============================================
+
+// Ver detalhes de Entrega
+window.viewEntrega = function(id) {
+    const entrega = entregas.find(e => String(e.id) === String(id));
+    
+    if (!entrega) {
+        showMessage('Entrega não encontrada!', 'error');
+        return;
+    }
+
+    const modalHTML = `
+        <div class="modal-overlay" id="viewModal" onclick="closeModalOnOverlay(event)">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Detalhes da Entrega</h3>
+                    <button class="modal-close" onclick="closeViewModal()">×</button>
+                </div>
+                
+                <div class="info-section">
+                    <h4>Informações da Nota Fiscal</h4>
+                    <p><strong>Número NF:</strong> ${entrega.numero_nf}</p>
+                    <p><strong>Documento:</strong> ${entrega.documento || '-'}</p>
+                    <p><strong>Data Emissão:</strong> ${formatDate(entrega.data_emissao)}</p>
+                    <p><strong>Valor NF:</strong> R$ ${parseFloat(entrega.valor_nf).toFixed(2)}</p>
+                    <p><strong>Vendedor:</strong> ${entrega.vendedor}</p>
+                </div>
+
+                <div class="info-section">
+                    <h4>Informações do Órgão</h4>
+                    <p><strong>Nome:</strong> ${entrega.nome_orgao}</p>
+                    <p><strong>Contato:</strong> ${entrega.contato_orgao || '-'}</p>
+                    <p><strong>Cidade:</strong> ${entrega.cidade_destino}</p>
+                </div>
+
+                <div class="info-section">
+                    <h4>Informações do Transporte</h4>
+                    <p><strong>Transportadora:</strong> ${entrega.transportadora}</p>
+                    <p><strong>Valor Frete:</strong> R$ ${parseFloat(entrega.valor_frete).toFixed(2)}</p>
+                    <p><strong>Data Coleta:</strong> ${formatDate(entrega.data_coleta)}</p>
+                    <p><strong>Previsão Entrega:</strong> ${formatDate(entrega.previsao_entrega)}</p>
+                    <p><strong>Status:</strong> <span class="badge entregue">${entrega.status}</span></p>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary" onclick="closeViewModal()">Fechar</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+// Ver detalhes de Liquidada
+window.viewLiquidada = function(id) {
+    const liquidada = liquidadas.find(l => String(l.id) === String(id));
+    
+    if (!liquidada) {
+        showMessage('Nota não encontrada!', 'error');
+        return;
+    }
+
+    const modalHTML = `
+        <div class="modal-overlay" id="viewModal" onclick="closeModalOnOverlay(event)">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Detalhes da Nota Liquidada</h3>
+                    <button class="modal-close" onclick="closeViewModal()">×</button>
+                </div>
+                
+                <div class="info-section">
+                    <h4>Informações da Nota Fiscal</h4>
+                    <p><strong>Número NF:</strong> ${liquidada.numero_nf}</p>
+                    <p><strong>Tipo:</strong> ${liquidada.tipo_nf}</p>
+                    <p><strong>Valor:</strong> R$ ${parseFloat(liquidada.valor).toFixed(2)}</p>
+                    <p><strong>Vendedor:</strong> ${liquidada.vendedor}</p>
+                    <p><strong>Status:</strong> <span class="badge entregue">${liquidada.status}</span></p>
+                </div>
+
+                <div class="info-section">
+                    <h4>Informações do Órgão</h4>
+                    <p><strong>Nome:</strong> ${liquidada.orgao}</p>
+                </div>
+
+                <div class="info-section">
+                    <h4>Informações Financeiras</h4>
+                    <p><strong>Banco:</strong> ${liquidada.banco}</p>
+                    <p><strong>Data Emissão:</strong> ${formatDate(liquidada.data_emissao)}</p>
+                    <p><strong>Data Vencimento:</strong> ${formatDate(liquidada.data_vencimento)}</p>
+                    <p><strong>Data Pagamento:</strong> ${formatDate(liquidada.data_pagamento)}</p>
+                </div>
+
+                ${liquidada.observacoes ? `
+                    <div class="info-section">
+                        <h4>Observações</h4>
+                        <p>${liquidada.observacoes}</p>
+                    </div>
+                ` : ''}
+
+                <div class="modal-actions">
+                    <button class="secondary" onclick="closeViewModal()">Fechar</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+function closeViewModal() {
+    const modal = document.getElementById('viewModal');
+    if (modal) {
+        modal.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(() => modal.remove(), 200);
+    }
+}
+
+function closeModalOnOverlay(event) {
+    if (event.target.classList.contains('modal-overlay')) {
+        closeViewModal();
+    }
+}
+
+// Adicionar CSS para fadeOut
+if (!document.querySelector('#modalAnimations')) {
+    const style = document.createElement('style');
+    style.id = 'modalAnimations';
+    style.textContent = `@keyframes fadeOut { to { opacity: 0; } }`;
+    document.head.appendChild(style);
+}
 
 // ============================================
 // FILTROS
