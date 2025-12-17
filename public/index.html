@@ -52,12 +52,12 @@
                  MONITORAMENTO
                  ======================================== -->
             <div id="monitoramento" class="main-view" style="display: none;">
-                <!-- NAVEGAÇÃO POR ANOS NO MONITORAMENTO -->
+                <!-- NAVEGAÇÃO POR MESES NO MONITORAMENTO -->
                 <div class="card">
-                    <div class="year-navigation">
-                        <button onclick="previousYearMonitoramento()" class="year-nav-btn">◄ Ano Anterior</button>
-                        <h2 id="monitoramentoYearDisplay" class="year-display">2024</h2>
-                        <button onclick="nextYearMonitoramento()" class="year-nav-btn">Próximo Ano ►</button>
+                    <div class="month-navigation">
+                        <button onclick="previousMonth()" class="month-nav-btn">◄ Mês Anterior</button>
+                        <h2 id="currentMonthDisplay" class="month-display">Carregando...</h2>
+                        <button onclick="nextMonth()" class="month-nav-btn">Próximo Mês ►</button>
                     </div>
                 </div>
 
@@ -85,7 +85,7 @@
                     </div>
                 </div>
 
-                <!-- REGISTROS SEPARADOS POR MÊS DE EMISSÃO -->
+                <!-- REGISTROS DO MÊS SELECIONADO -->
                 <div id="monitoramentoContainer"></div>
             </div>
         </div>
