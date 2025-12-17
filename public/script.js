@@ -443,15 +443,15 @@ window.renderMonitoramento = function() {
         }
     }
 
-    // Se não houver nenhum registro
-    if (html === '') {
-        html = '<div class="card"><p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma venda encontrada neste ano</p></div>';
-    }
-
+    // Se não houver NENHUM registro, container fica vazio
     container.innerHTML = html;
 };
 
 function renderTabelaVendas(vendas) {
+    if (!vendas || vendas.length === 0) {
+        return '';
+    }
+
     return `
         <div style="overflow-x: auto;">
             <table>
