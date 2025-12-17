@@ -527,6 +527,54 @@ tbody tr:hover { background: var(--table-hover); }
     border-bottom: 2px solid var(--border-color);
 }
 
+/* DASHBOARDS HORIZONTAIS */
+.dashboards-horizontal {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-mensal {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.dashboard-mensal:hover {
+    border-color: var(--primary);
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(204, 112, 0, 0.2);
+}
+
+.dashboard-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-valor {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--success-color);
+}
+
+@media (max-width: 768px) {
+    .dashboards-horizontal {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .dashboard-valor {
+        font-size: 1.2rem;
+    }
+}
+
 /* SEÇÃO DE MONITORAMENTO */
 .month-section-title {
     font-size: 1.2rem;
