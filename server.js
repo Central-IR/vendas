@@ -164,7 +164,10 @@ app.get('/api/sync-entregas', async (req, res) => {
             .select('*')
             .eq('status', 'ENTREGUE');
 
-        if (freteError) throw freteError;
+        if (freteError) {
+            console.error('Erro ao buscar fretes:', freteError);
+            throw freteError;
+        }
 
         if (!fretesEntregues || fretesEntregues.length === 0) {
             return res.json({ 
@@ -173,14 +176,20 @@ app.get('/api/sync-entregas', async (req, res) => {
             });
         }
 
+        console.log(`${fretesEntregues.length} fretes entregues encontrados`);
+
         // Buscar notas já sincronizadas
         const { data: vendasExistentes, error: vendasError } = await supabase
             .from('vendas')
             .select('numero_nf');
 
-        if (vendasError) throw vendasError;
+        if (vendasError) {
+            console.error('Erro ao buscar vendas existentes:', vendasError);
+            throw vendasError;
+        }
 
         const nfsExistentes = new Set(vendasExistentes?.map(v => v.numero_nf) || []);
+        console.log(`${nfsExistentes.size} notas já existem em vendas`);
 
         // Filtrar apenas novas entregas
         const novasEntregas = fretesEntregues.filter(f => !nfsExistentes.has(f.numero_nf));
@@ -192,12 +201,17 @@ app.get('/api/sync-entregas', async (req, res) => {
             });
         }
 
+        console.log(`${novasEntregas.length} novas entregas para sincronizar`);
+
         // Buscar status de pagamento do contas receber
         const { data: contasReceber, error: contasError } = await supabase
             .from('contas receber')
             .select('numero_nf, status, data_pagamento');
 
-        if (contasError) throw contasError;
+        if (contasError) {
+            console.error('Erro ao buscar contas receber:', contasError);
+            throw contasError;
+        }
 
         const pagamentosMap = new Map();
         contasReceber?.forEach(c => {
@@ -214,9 +228,9 @@ app.get('/api/sync-entregas', async (req, res) => {
             return {
                 numero_nf: frete.numero_nf,
                 vendedor: frete.vendedor,
-                valor_nf: frete.valor_nf,
+                valor_nf: parseFloat(frete.valor_nf),
                 data_emissao: frete.data_emissao,
-                data_entrega: frete.previsao_entrega, // Data que foi marcada como entregue
+                data_entrega: frete.previsao_entrega,
                 nome_orgao: frete.nome_orgao,
                 cidade_destino: frete.cidade_destino,
                 status_pagamento: pagamento.pago,
@@ -224,12 +238,17 @@ app.get('/api/sync-entregas', async (req, res) => {
             };
         });
 
+        console.log('Inserindo vendas:', vendasParaInserir);
+
         const { data: inserted, error: insertError } = await supabase
             .from('vendas')
             .insert(vendasParaInserir)
             .select();
 
-        if (insertError) throw insertError;
+        if (insertError) {
+            console.error('Erro ao inserir vendas:', insertError);
+            throw insertError;
+        }
 
         console.log(`✅ ${inserted.length} novas vendas sincronizadas`);
         res.json({ 
@@ -242,7 +261,8 @@ app.get('/api/sync-entregas', async (req, res) => {
         console.error('❌ Erro ao sincronizar entregas:', error);
         res.status(500).json({ 
             error: 'Erro ao sincronizar entregas',
-            details: error.message 
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
