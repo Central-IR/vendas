@@ -527,51 +527,195 @@ tbody tr:hover { background: var(--table-hover); }
     border-bottom: 2px solid var(--border-color);
 }
 
-/* DASHBOARDS HORIZONTAIS */
+/* DASHBOARDS RETANGULARES */
 .dashboards-horizontal {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
 }
 
 .dashboard-mensal {
     background: var(--bg-card);
-    padding: 1.5rem;
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
     text-align: center;
     transition: all 0.3s ease;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .dashboard-mensal:hover {
     border-color: var(--primary);
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(204, 112, 0, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(204, 112, 0, 0.25);
 }
 
 .dashboard-title {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 700;
     color: var(--text-secondary);
     margin-bottom: 1rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .dashboard-valor {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 800;
     color: var(--success-color);
+    line-height: 1;
+}
+
+/* Botões de ação nas tabelas */
+.action-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin: 0 4px;
+}
+
+.action-btn.view {
+    background: var(--btn-view);
+    color: white;
+}
+
+.action-btn.view:hover {
+    background: #e66000;
+    transform: translateY(-1px);
+}
+
+/* Modal de visualização */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: var(--danger-color);
+    color: white;
+}
+
+.info-section {
+    margin-bottom: 1.5rem;
+}
+
+.info-section h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-section p {
+    margin: 0.75rem 0;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.info-section strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.modal-actions button {
+    margin: 0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @media (max-width: 768px) {
     .dashboards-horizontal {
         grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .dashboard-mensal {
+        padding: 1.5rem 1rem;
+        min-height: 100px;
     }
     
     .dashboard-valor {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 1.5rem;
     }
 }
 
