@@ -6,20 +6,29 @@ const API_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3000/api' 
     : '/api';
 
-let vendas = [];
+const VENDEDOR = 'MIGUEL'; // Filtrar apenas vendas do Miguel
+
+let entregas = []; // Dados do Controle de Frete
+let liquidadas = []; // Dados do Contas a Receber
 let isOnline = false;
-let lastDataHash = '';
 let sessionToken = null;
-let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth();
 let currentView = 'painel';
+
+// Navegação de anos (Painel)
+let painelYear = new Date().getFullYear();
+
+// Navegação de meses (Entregas e Liquidadas)
+let entregasMonth = new Date().getMonth();
+let entregasYear = new Date().getFullYear();
+let liquidadasMonth = new Date().getMonth();
+let liquidadasYear = new Date().getFullYear();
 
 const meses = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 
-console.log('Vendas App iniciada');
+console.log('🚀 Vendas App - Miguel iniciada');
 
 document.addEventListener('DOMContentLoaded', () => {
     verificarAutenticacao();
@@ -32,15 +41,19 @@ window.switchMainView = function(view) {
     currentView = view;
     
     document.getElementById('btnPainel').classList.toggle('active', view === 'painel');
-    document.getElementById('btnMonitoramento').classList.toggle('active', view === 'monitoramento');
+    document.getElementById('btnEntregas').classList.toggle('active', view === 'entregas');
+    document.getElementById('btnLiquidadas').classList.toggle('active', view === 'liquidadas');
     
     document.getElementById('painelVendas').style.display = view === 'painel' ? 'block' : 'none';
-    document.getElementById('monitoramento').style.display = view === 'monitoramento' ? 'block' : 'none';
+    document.getElementById('entregas').style.display = view === 'entregas' ? 'block' : 'none';
+    document.getElementById('liquidadas').style.display = view === 'liquidadas' ? 'block' : 'none';
     
     if (view === 'painel') {
-        renderAllDashboards();
-    } else {
-        renderMonitoramento();
+        renderPainelVendas();
+    } else if (view === 'entregas') {
+        renderEntregas();
+    } else if (view === 'liquidadas') {
+        renderLiquidadas();
     }
 };
 
@@ -49,51 +62,75 @@ window.switchMainView = function(view) {
 // ============================================
 function updateYearDisplay() {
     const display = document.getElementById('currentYearDisplay');
-    if (display) {
-        display.textContent = currentYear;
-    }
+    if (display) display.textContent = painelYear;
 }
 
 window.previousYear = function() {
-    currentYear--;
+    painelYear--;
     updateYearDisplay();
-    renderAllDashboards();
+    renderPainelVendas();
 };
 
 window.nextYear = function() {
-    currentYear++;
+    painelYear++;
     updateYearDisplay();
-    renderAllDashboards();
+    renderPainelVendas();
 };
 
 // ============================================
-// NAVEGAÇÃO POR MESES - MONITORAMENTO
+// NAVEGAÇÃO POR MESES - ENTREGAS
 // ============================================
-function updateMonthDisplay() {
-    const display = document.getElementById('currentMonthDisplay');
-    if (display) {
-        display.textContent = `${meses[currentMonth]} ${currentYear}`;
-    }
+function updateEntregasMonthDisplay() {
+    const display = document.getElementById('entregasMonthDisplay');
+    if (display) display.textContent = `${meses[entregasMonth]} ${entregasYear}`;
 }
 
-window.previousMonth = function() {
-    currentMonth--;
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
+window.previousMonthEntregas = function() {
+    entregasMonth--;
+    if (entregasMonth < 0) {
+        entregasMonth = 11;
+        entregasYear--;
     }
-    updateMonthDisplay();
-    renderMonitoramento();
+    updateEntregasMonthDisplay();
+    renderEntregas();
 };
 
-window.nextMonth = function() {
-    currentMonth++;
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
+window.nextMonthEntregas = function() {
+    entregasMonth++;
+    if (entregasMonth > 11) {
+        entregasMonth = 0;
+        entregasYear++;
     }
-    updateMonthDisplay();
-    renderMonitoramento();
+    updateEntregasMonthDisplay();
+    renderEntregas();
+};
+
+// ============================================
+// NAVEGAÇÃO POR MESES - LIQUIDADAS
+// ============================================
+function updateLiquidadasMonthDisplay() {
+    const display = document.getElementById('liquidadasMonthDisplay');
+    if (display) display.textContent = `${meses[liquidadasMonth]} ${liquidadasYear}`;
+}
+
+window.previousMonthLiquidadas = function() {
+    liquidadasMonth--;
+    if (liquidadasMonth < 0) {
+        liquidadasMonth = 11;
+        liquidadasYear--;
+    }
+    updateLiquidadasMonthDisplay();
+    renderLiquidadas();
+};
+
+window.nextMonthLiquidadas = function() {
+    liquidadasMonth++;
+    if (liquidadasMonth > 11) {
+        liquidadasMonth = 0;
+        liquidadasYear++;
+    }
+    updateLiquidadasMonthDisplay();
+    renderLiquidadas();
 };
 
 // ============================================
@@ -105,10 +142,10 @@ function verificarAutenticacao() {
 
     if (tokenFromUrl) {
         sessionToken = tokenFromUrl;
-        sessionStorage.setItem('vendasSession', tokenFromUrl);
+        sessionStorage.setItem('vendasMiguelSession', tokenFromUrl);
         window.history.replaceState({}, document.title, window.location.pathname);
     } else {
-        sessionToken = sessionStorage.getItem('vendasSession');
+        sessionToken = sessionStorage.getItem('vendasMiguelSession');
     }
 
     if (!sessionToken) {
@@ -131,7 +168,8 @@ function mostrarTelaAcessoNegado(mensagem = 'NÃO AUTORIZADO') {
 
 function inicializarApp() {
     updateYearDisplay();
-    updateMonthDisplay();
+    updateEntregasMonthDisplay();
+    updateLiquidadasMonthDisplay();
     checkServerStatus();
     setInterval(checkServerStatus, 15000);
     startPolling();
@@ -142,7 +180,7 @@ function inicializarApp() {
 // ============================================
 async function checkServerStatus() {
     try {
-        const response = await fetch(`${API_URL}/vendas`, {
+        const response = await fetch(`${API_URL}/status`, {
             method: 'GET',
             headers: { 
                 'X-Session-Token': sessionToken,
@@ -151,7 +189,7 @@ async function checkServerStatus() {
         });
 
         if (response.status === 401) {
-            sessionStorage.removeItem('vendasSession');
+            sessionStorage.removeItem('vendasMiguelSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
             return false;
         }
@@ -160,8 +198,8 @@ async function checkServerStatus() {
         isOnline = response.ok;
         
         if (wasOffline && isOnline) {
-            console.log('Servidor ONLINE');
-            await loadVendas();
+            console.log('✅ Servidor ONLINE');
+            await loadAllData();
         }
         
         updateConnectionStatus();
@@ -183,50 +221,55 @@ function updateConnectionStatus() {
 // ============================================
 // CARREGAMENTO DE DADOS
 // ============================================
-async function loadVendas() {
+async function loadAllData() {
     if (!isOnline) return;
 
     try {
-        const response = await fetch(`${API_URL}/vendas`, {
-            method: 'GET',
+        // Carregar Entregas (Controle de Frete)
+        const entregasResponse = await fetch(`${API_URL}/entregas?vendedor=${VENDEDOR}`, {
             headers: { 
                 'X-Session-Token': sessionToken,
                 'Accept': 'application/json'
             }
         });
 
-        if (response.status === 401) {
-            sessionStorage.removeItem('vendasSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
-            return;
+        if (entregasResponse.ok) {
+            entregas = await entregasResponse.json();
+            console.log(`📦 ${entregas.length} entregas carregadas`);
         }
 
-        if (!response.ok) return;
-
-        const data = await response.json();
-        vendas = data;
-        
-        const newHash = JSON.stringify(vendas.map(v => v.id));
-        if (newHash !== lastDataHash) {
-            lastDataHash = newHash;
-            console.log(`${vendas.length} vendas carregadas`);
-            updateAllFilters();
-            
-            if (currentView === 'painel') {
-                renderAllDashboards();
-            } else {
-                renderMonitoramento();
+        // Carregar Liquidadas (Contas a Receber)
+        const liquidadasResponse = await fetch(`${API_URL}/liquidadas?vendedor=${VENDEDOR}`, {
+            headers: { 
+                'X-Session-Token': sessionToken,
+                'Accept': 'application/json'
             }
+        });
+
+        if (liquidadasResponse.ok) {
+            liquidadas = await liquidadasResponse.json();
+            console.log(`💰 ${liquidadas.length} notas liquidadas carregadas`);
         }
+
+        updateAllFilters();
+        
+        if (currentView === 'painel') {
+            renderPainelVendas();
+        } else if (currentView === 'entregas') {
+            renderEntregas();
+        } else if (currentView === 'liquidadas') {
+            renderLiquidadas();
+        }
+
     } catch (error) {
-        console.error('Erro ao carregar:', error);
+        console.error('❌ Erro ao carregar dados:', error);
     }
 }
 
 function startPolling() {
-    loadVendas();
+    loadAllData();
     setInterval(() => {
-        if (isOnline) loadVendas();
+        if (isOnline) loadAllData();
     }, 30000);
 }
 
@@ -246,33 +289,8 @@ window.syncData = async function() {
     showMessage('Sincronizando dados...', 'success');
 
     try {
-        const entregasResponse = await fetch(`${API_URL}/sync-entregas`, {
-            method: 'GET',
-            headers: { 
-                'X-Session-Token': sessionToken,
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!entregasResponse.ok) throw new Error('Erro ao sincronizar entregas');
-        const entregasData = await entregasResponse.json();
-
-        const pagamentosResponse = await fetch(`${API_URL}/sync-pagamentos`, {
-            method: 'GET',
-            headers: { 
-                'X-Session-Token': sessionToken,
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!pagamentosResponse.ok) throw new Error('Erro ao sincronizar pagamentos');
-        const pagamentosData = await pagamentosResponse.json();
-
-        await loadVendas();
-
-        const totalSynced = entregasData.synced + pagamentosData.updated;
-        showMessage(`Sincronização concluída! ${totalSynced} registros atualizados.`, 'success');
-
+        await loadAllData();
+        showMessage('Sincronização concluída!', 'success');
     } catch (error) {
         console.error('Erro na sincronização:', error);
         showMessage('Erro ao sincronizar dados.', 'error');
@@ -283,226 +301,236 @@ window.syncData = async function() {
 };
 
 // ============================================
-// PAINEL DE VENDAS - TODOS OS DASHBOARDS
+// PAINEL DE VENDAS - APENAS VALORES PAGOS
 // ============================================
-function renderAllDashboards() {
+function renderPainelVendas() {
     const container = document.getElementById('dashboardsContainer');
     if (!container) return;
 
-    let html = '';
+    let html = '<div class="dashboards-horizontal">';
 
     for (let mes = 0; mes < 12; mes++) {
-        const stats = calcularEstatisticasMes(mes, currentYear);
-        html += gerarDashboardHTML(meses[mes], stats);
+        const valorPago = calcularValorPagoMes(mes, painelYear);
+        html += gerarDashboardMensal(meses[mes], valorPago);
     }
 
-    const statsTotal = calcularEstatisticasTotal(currentYear);
-    html += gerarDashboardHTML('Total', statsTotal);
+    const valorTotalAno = calcularValorPagoAno(painelYear);
+    html += gerarDashboardMensal('Total', valorTotalAno);
 
+    html += '</div>';
     container.innerHTML = html;
 }
 
-function calcularEstatisticasMes(mes, ano) {
-    const vendasPagasNoMes = vendas.filter(v => {
-        if (!v.data_pagamento) return false;
-        const dataPagamento = new Date(v.data_pagamento + 'T00:00:00');
-        return dataPagamento.getMonth() === mes && dataPagamento.getFullYear() === ano;
-    });
-
-    const vendasDoAno = vendas.filter(v => {
-        const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
-        return dataEmissao.getFullYear() === ano;
-    });
-
-    const pagas = vendasPagasNoMes.length;
-    const pendentes = vendasDoAno.filter(v => v.status_pagamento === false).length;
-    
-    const valorPago = vendasPagasNoMes
-        .reduce((sum, v) => sum + parseFloat(v.valor_nf || 0), 0);
-    
-    const valorPendente = vendasDoAno
-        .filter(v => v.status_pagamento === false)
-        .reduce((sum, v) => sum + parseFloat(v.valor_nf || 0), 0);
-
-    return { pagas, pendentes, valorPago, valorPendente };
+function calcularValorPagoMes(mes, ano) {
+    return liquidadas
+        .filter(l => {
+            if (!l.data_pagamento) return false;
+            const dataPagamento = new Date(l.data_pagamento + 'T00:00:00');
+            return dataPagamento.getMonth() === mes && dataPagamento.getFullYear() === ano;
+        })
+        .reduce((sum, l) => sum + parseFloat(l.valor || 0), 0);
 }
 
-function calcularEstatisticasTotal(ano) {
-    const vendasPagasNoAno = vendas.filter(v => {
-        if (!v.data_pagamento) return false;
-        const dataPagamento = new Date(v.data_pagamento + 'T00:00:00');
-        return dataPagamento.getFullYear() === ano;
-    });
-
-    const todasVendasAno = vendas.filter(v => {
-        const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
-        return dataEmissao.getFullYear() === ano;
-    });
-
-    const pagas = vendasPagasNoAno.length;
-    const pendentes = todasVendasAno.filter(v => v.status_pagamento === false).length;
-    
-    const valorPago = vendasPagasNoAno
-        .reduce((sum, v) => sum + parseFloat(v.valor_nf || 0), 0);
-    
-    const valorPendente = todasVendasAno
-        .filter(v => v.status_pagamento === false)
-        .reduce((sum, v) => sum + parseFloat(v.valor_nf || 0), 0);
-
-    return { pagas, pendentes, valorPago, valorPendente };
+function calcularValorPagoAno(ano) {
+    return liquidadas
+        .filter(l => {
+            if (!l.data_pagamento) return false;
+            const dataPagamento = new Date(l.data_pagamento + 'T00:00:00');
+            return dataPagamento.getFullYear() === ano;
+        })
+        .reduce((sum, l) => sum + parseFloat(l.valor || 0), 0);
 }
 
-function gerarDashboardHTML(titulo, stats) {
-    const temPendentes = stats.pendentes > 0;
-    
+function gerarDashboardMensal(titulo, valor) {
     return `
-        <div class="card month-dashboard">
-            <h3 class="month-title">${titulo}</h3>
-            <div class="dashboard-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Notas Pagas</div>
-                    <div class="stat-value stat-success">${stats.pagas}</div>
-                </div>
-                <div class="stat-card ${temPendentes ? 'stat-card-alert has-alert' : ''}">
-                    <div class="stat-label">Pendentes</div>
-                    <div class="stat-value stat-danger">${stats.pendentes}</div>
-                    ${temPendentes ? `<div class="pulse-badge">${stats.pendentes}</div>` : ''}
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Valor Pago</div>
-                    <div class="stat-value stat-success">R$ ${stats.valorPago.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Valor Pendente</div>
-                    <div class="stat-value stat-gray">R$ ${stats.valorPendente.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                </div>
+        <div class="dashboard-mensal">
+            <h3 class="dashboard-title">${titulo}</h3>
+            <div class="dashboard-valor">
+                R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
             </div>
         </div>
     `;
 }
 
 // ============================================
-// MONITORAMENTO - LISTA DO MÊS SELECIONADO
+// ENTREGAS - CONTROLE DE FRETE
 // ============================================
-window.renderMonitoramento = function() {
-    const container = document.getElementById('monitoramentoContainer');
+window.renderEntregas = function() {
+    const container = document.getElementById('entregasContainer');
     if (!container) return;
 
-    const searchTerm = document.getElementById('search')?.value.toLowerCase() || '';
-    const filterVendedor = document.getElementById('filterVendedor')?.value || '';
-    const filterStatus = document.getElementById('filterStatus')?.value || '';
+    const searchTerm = document.getElementById('searchEntregas')?.value.toLowerCase() || '';
+    const filterTransportadora = document.getElementById('filterTransportadora')?.value || '';
 
-    // Filtrar vendas do MÊS selecionado (por data de EMISSÃO)
-    let vendasFiltradas = vendas.filter(v => {
-        const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
-        return dataEmissao.getMonth() === currentMonth && dataEmissao.getFullYear() === currentYear;
+    let filtradas = entregas.filter(e => {
+        const dataEntrega = new Date(e.previsao_entrega + 'T00:00:00');
+        return dataEntrega.getMonth() === entregasMonth && dataEntrega.getFullYear() === entregasYear;
     });
 
-    // Aplicar filtros
-    if (filterVendedor) {
-        vendasFiltradas = vendasFiltradas.filter(v => v.vendedor === filterVendedor);
-    }
-
-    if (filterStatus) {
-        if (filterStatus === 'PAGO') {
-            vendasFiltradas = vendasFiltradas.filter(v => v.status_pagamento === true);
-        } else if (filterStatus === 'PENDENTE') {
-            vendasFiltradas = vendasFiltradas.filter(v => v.status_pagamento === false);
-        }
+    if (filterTransportadora) {
+        filtradas = filtradas.filter(e => e.transportadora === filterTransportadora);
     }
 
     if (searchTerm) {
-        vendasFiltradas = vendasFiltradas.filter(v => 
-            v.numero_nf?.toLowerCase().includes(searchTerm) ||
-            v.nome_orgao?.toLowerCase().includes(searchTerm) ||
-            v.cidade_destino?.toLowerCase().includes(searchTerm)
+        filtradas = filtradas.filter(e => 
+            e.numero_nf?.toLowerCase().includes(searchTerm) ||
+            e.nome_orgao?.toLowerCase().includes(searchTerm) ||
+            e.cidade_destino?.toLowerCase().includes(searchTerm)
         );
     }
 
-    // Ordenar em ordem CRESCENTE (mais antiga primeiro)
-    vendasFiltradas.sort((a, b) => {
-        return new Date(a.data_emissao) - new Date(b.data_emissao);
-    });
+    filtradas.sort((a, b) => new Date(a.previsao_entrega) - new Date(b.previsao_entrega));
 
-    // Renderizar em um único card
-    if (vendasFiltradas.length > 0) {
-        container.innerHTML = `
-            <div class="card">
-                ${renderTabelaVendas(vendasFiltradas)}
-            </div>
-        `;
-    } else {
-        container.innerHTML = '<div class="card"><p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma venda encontrada neste período</p></div>';
-    }
-};
-
-function renderTabelaVendas(vendas) {
-    if (!vendas || vendas.length === 0) {
-        return '';
+    if (filtradas.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma entrega encontrada neste período</p>';
+        return;
     }
 
-    return `
+    container.innerHTML = `
         <div style="overflow-x: auto;">
             <table>
                 <thead>
                     <tr>
                         <th>NF</th>
-                        <th>Vendedor</th>
-                        <th>Órgão</th>
-                        <th>Cidade-UF</th>
                         <th>Data Emissão</th>
-                        <th>Data Entrega</th>
-                        <th>Data Pagamento</th>
+                        <th>Órgão</th>
+                        <th>Cidade</th>
+                        <th>Transportadora</th>
                         <th>Valor NF</th>
-                        <th>Status</th>
+                        <th>Valor Frete</th>
+                        <th>Data Entrega</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${vendas.map(v => {
-                        const isPago = v.status_pagamento === true;
-                        const rowClass = isPago ? 'row-pago' : '';
-                        return `
-                        <tr class="${rowClass}">
-                            <td><strong>${v.numero_nf}</strong></td>
-                            <td>${v.vendedor}</td>
-                            <td style="max-width: 200px; word-wrap: break-word;">${v.nome_orgao}</td>
-                            <td>${v.cidade_destino}</td>
-                            <td>${formatDate(v.data_emissao)}</td>
-                            <td>${formatDate(v.data_entrega)}</td>
-                            <td>${v.data_pagamento ? formatDate(v.data_pagamento) : '-'}</td>
-                            <td><strong>R$ ${parseFloat(v.valor_nf).toFixed(2)}</strong></td>
-                            <td>${getStatusBadge(isPago)}</td>
+                    ${filtradas.map(e => `
+                        <tr>
+                            <td><strong>${e.numero_nf}</strong></td>
+                            <td>${formatDate(e.data_emissao)}</td>
+                            <td style="max-width: 200px;">${e.nome_orgao}</td>
+                            <td>${e.cidade_destino}</td>
+                            <td>${e.transportadora}</td>
+                            <td><strong>R$ ${parseFloat(e.valor_nf).toFixed(2)}</strong></td>
+                            <td>R$ ${parseFloat(e.valor_frete).toFixed(2)}</td>
+                            <td>${formatDate(e.previsao_entrega)}</td>
                         </tr>
-                    `}).join('')}
+                    `).join('')}
                 </tbody>
             </table>
         </div>
     `;
-}
+};
+
+// ============================================
+// LIQUIDADAS - CONTAS A RECEBER
+// ============================================
+window.renderLiquidadas = function() {
+    const container = document.getElementById('liquidadasContainer');
+    if (!container) return;
+
+    const searchTerm = document.getElementById('searchLiquidadas')?.value.toLowerCase() || '';
+    const filterBanco = document.getElementById('filterBanco')?.value || '';
+
+    let filtradas = liquidadas.filter(l => {
+        if (!l.data_pagamento) return false;
+        const dataPagamento = new Date(l.data_pagamento + 'T00:00:00');
+        return dataPagamento.getMonth() === liquidadasMonth && dataPagamento.getFullYear() === liquidadasYear;
+    });
+
+    if (filterBanco) {
+        filtradas = filtradas.filter(l => l.banco === filterBanco);
+    }
+
+    if (searchTerm) {
+        filtradas = filtradas.filter(l => 
+            l.numero_nf?.toLowerCase().includes(searchTerm) ||
+            l.orgao?.toLowerCase().includes(searchTerm) ||
+            l.banco?.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    filtradas.sort((a, b) => new Date(a.data_pagamento) - new Date(b.data_pagamento));
+
+    if (filtradas.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma nota liquidada encontrada neste período</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>NF</th>
+                        <th>Órgão</th>
+                        <th>Banco</th>
+                        <th>Valor</th>
+                        <th>Data Emissão</th>
+                        <th>Data Vencimento</th>
+                        <th>Data Pagamento</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filtradas.map(l => `
+                        <tr class="row-pago">
+                            <td><strong>${l.numero_nf}</strong></td>
+                            <td style="max-width: 200px;">${l.orgao}</td>
+                            <td>${l.banco}</td>
+                            <td><strong>R$ ${parseFloat(l.valor).toFixed(2)}</strong></td>
+                            <td>${formatDate(l.data_emissao)}</td>
+                            <td>${formatDate(l.data_vencimento)}</td>
+                            <td>${formatDate(l.data_pagamento)}</td>
+                            <td>${l.tipo_nf}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+};
 
 // ============================================
 // FILTROS
 // ============================================
 function updateAllFilters() {
-    updateVendedoresFilter();
+    updateTransportadorasFilter();
+    updateBancosFilter();
 }
 
-function updateVendedoresFilter() {
-    const vendedores = new Set();
-    vendas.forEach(v => {
-        if (v.vendedor?.trim()) {
-            vendedores.add(v.vendedor.trim());
-        }
+function updateTransportadorasFilter() {
+    const transportadoras = new Set();
+    entregas.forEach(e => {
+        if (e.transportadora?.trim()) transportadoras.add(e.transportadora.trim());
     });
 
-    const select = document.getElementById('filterVendedor');
+    const select = document.getElementById('filterTransportadora');
+    if (select) {
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">Todas</option>';
+        Array.from(transportadoras).sort().forEach(t => {
+            const option = document.createElement('option');
+            option.value = t;
+            option.textContent = t;
+            select.appendChild(option);
+        });
+        select.value = currentValue;
+    }
+}
+
+function updateBancosFilter() {
+    const bancos = new Set();
+    liquidadas.forEach(l => {
+        if (l.banco?.trim()) bancos.add(l.banco.trim());
+    });
+
+    const select = document.getElementById('filterBanco');
     if (select) {
         const currentValue = select.value;
         select.innerHTML = '<option value="">Todos</option>';
-        Array.from(vendedores).sort().forEach(v => {
+        Array.from(bancos).sort().forEach(b => {
             const option = document.createElement('option');
-            option.value = v;
-            option.textContent = v;
+            option.value = b;
+            option.textContent = b;
             select.appendChild(option);
         });
         select.value = currentValue;
@@ -516,12 +544,6 @@ function formatDate(dateString) {
     if (!dateString) return '-';
     const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('pt-BR');
-}
-
-function getStatusBadge(isPago) {
-    return isPago 
-        ? '<span class="badge entregue">PAGO</span>' 
-        : '<span class="badge aguardando">PENDENTE</span>';
 }
 
 function showMessage(message, type) {
