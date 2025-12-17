@@ -3,61 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendas</title>
+    <title>Vendas - Miguel</title>
     <link rel="icon" type="image/png" href="I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-PRETO.png">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
-        <h1 class="splash-title">Vendas</h1>
+        <h1 class="splash-title">Vendas - Miguel</h1>
     </div>
 
     <!-- Conteúdo Principal -->
     <div class="app-content">
         <div class="container">
             <div class="header">
-                <h1>Vendas</h1>
+                <h1>Vendas - Miguel</h1>
                 <div id="connectionStatus" class="connection-status offline">
                     <span class="status-dot"></span>
                 </div>
             </div>
 
-            <!-- NAVEGAÇÃO PRINCIPAL: PAINEL DE VENDAS vs MONITORAMENTO -->
+            <!-- NAVEGAÇÃO PRINCIPAL: 3 ABAS -->
             <div class="card">
                 <div class="main-navigation">
                     <button onclick="switchMainView('painel')" class="main-nav-btn active" id="btnPainel">Painel de Vendas</button>
-                    <button onclick="switchMainView('monitoramento')" class="main-nav-btn" id="btnMonitoramento">Monitoramento</button>
+                    <button onclick="switchMainView('entregas')" class="main-nav-btn" id="btnEntregas">Entregas</button>
+                    <button onclick="switchMainView('liquidadas')" class="main-nav-btn" id="btnLiquidadas">Liquidadas</button>
                 </div>
             </div>
 
             <!-- ========================================
-                 PAINEL DE VENDAS
+                 PAINEL DE VENDAS (Apenas valores pagos)
                  ======================================== -->
             <div id="painelVendas" class="main-view">
                 <!-- NAVEGAÇÃO POR ANOS -->
                 <div class="card">
                     <div class="year-navigation">
                         <button onclick="previousYear()" class="year-nav-btn">◄ Ano Anterior</button>
-                        <h2 id="currentYearDisplay" class="year-display">2024</h2>
+                        <h2 id="currentYearDisplay" class="year-display">2025</h2>
                         <button onclick="nextYear()" class="year-nav-btn">Próximo Ano ►</button>
                     </div>
                 </div>
 
-                <!-- TODOS OS DASHBOARDS DOS MESES -->
+                <!-- DASHBOARDS HORIZONTAIS DOS MESES -->
                 <div id="dashboardsContainer"></div>
             </div>
 
             <!-- ========================================
-                 MONITORAMENTO
+                 ENTREGAS (Controle de Frete)
                  ======================================== -->
-            <div id="monitoramento" class="main-view" style="display: none;">
-                <!-- NAVEGAÇÃO POR MESES NO MONITORAMENTO -->
+            <div id="entregas" class="main-view" style="display: none;">
+                <!-- NAVEGAÇÃO POR MESES -->
                 <div class="card">
                     <div class="month-navigation">
-                        <button onclick="previousMonth()" class="month-nav-btn">◄ Mês Anterior</button>
-                        <h2 id="currentMonthDisplay" class="month-display">Carregando...</h2>
-                        <button onclick="nextMonth()" class="month-nav-btn">Próximo Mês ►</button>
+                        <button onclick="previousMonthEntregas()" class="month-nav-btn">◄ Mês Anterior</button>
+                        <h2 id="entregasMonthDisplay" class="month-display">Dezembro 2025</h2>
+                        <button onclick="nextMonthEntregas()" class="month-nav-btn">Próximo Mês ►</button>
                     </div>
                 </div>
 
@@ -65,28 +66,57 @@
                 <div class="card">
                     <div class="filter-section">
                         <div class="form-group">
-                            <label for="search">Pesquisar</label>
-                            <input type="text" id="search" placeholder="NF, órgão, cidade..." oninput="renderMonitoramento()">
+                            <label for="searchEntregas">Pesquisar</label>
+                            <input type="text" id="searchEntregas" placeholder="NF, órgão, cidade..." oninput="renderEntregas()">
                         </div>
                         <div class="form-group">
-                            <label for="filterVendedor">Vendedor</label>
-                            <select id="filterVendedor" onchange="renderMonitoramento()">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="filterStatus">Status de Pagamento</label>
-                            <select id="filterStatus" onchange="renderMonitoramento()">
-                                <option value="">Todos</option>
-                                <option value="PAGO">Pago</option>
-                                <option value="PENDENTE">Pendente</option>
+                            <label for="filterTransportadora">Transportadora</label>
+                            <select id="filterTransportadora" onchange="renderEntregas()">
+                                <option value="">Todas</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- REGISTROS DO MÊS SELECIONADO -->
-                <div id="monitoramentoContainer"></div>
+                <!-- LISTA DE ENTREGAS -->
+                <div class="card">
+                    <div id="entregasContainer"></div>
+                </div>
+            </div>
+
+            <!-- ========================================
+                 LIQUIDADAS (Contas a Receber)
+                 ======================================== -->
+            <div id="liquidadas" class="main-view" style="display: none;">
+                <!-- NAVEGAÇÃO POR MESES -->
+                <div class="card">
+                    <div class="month-navigation">
+                        <button onclick="previousMonthLiquidadas()" class="month-nav-btn">◄ Mês Anterior</button>
+                        <h2 id="liquidadasMonthDisplay" class="month-display">Dezembro 2025</h2>
+                        <button onclick="nextMonthLiquidadas()" class="month-nav-btn">Próximo Mês ►</button>
+                    </div>
+                </div>
+
+                <!-- FILTROS -->
+                <div class="card">
+                    <div class="filter-section">
+                        <div class="form-group">
+                            <label for="searchLiquidadas">Pesquisar</label>
+                            <input type="text" id="searchLiquidadas" placeholder="NF, órgão, banco..." oninput="renderLiquidadas()">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterBanco">Banco</label>
+                            <select id="filterBanco" onchange="renderLiquidadas()">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LISTA DE LIQUIDADAS -->
+                <div class="card">
+                    <div id="liquidadasContainer"></div>
+                </div>
             </div>
         </div>
     </div>
