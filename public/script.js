@@ -2,7 +2,9 @@
 // CONFIGURAÇÃO
 // ============================================
 const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com';
-const API_URL = 'https://vendas-6s2u.onrender.com/api';
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api' 
+    : '/api';
 
 let vendas = [];
 let isOnline = false;
@@ -407,6 +409,7 @@ window.renderMonitoramento = function() {
         );
     }
 
+    // Agrupar por mês de EMISSÃO
     const vendasPorMes = {};
     for (let mes = 0; mes < 12; mes++) {
         vendasPorMes[mes] = [];
@@ -418,26 +421,31 @@ window.renderMonitoramento = function() {
         vendasPorMes[mes].push(v);
     });
 
+    // Ordenar cada mês em ordem CRESCENTE
     for (let mes = 0; mes < 12; mes++) {
         vendasPorMes[mes].sort((a, b) => {
             return new Date(a.data_emissao) - new Date(b.data_emissao);
         });
     }
 
+    // Renderizar TODOS OS MESES (mesmo vazios)
     let html = '';
+    let temAlgumRegistro = false;
+    
     for (let mes = 0; mes < 12; mes++) {
-        if (vendasPorMes[mes].length > 0) {
-            html += `
-                <div class="card">
-                    <h3 class="month-section-title">${meses[mes]} ${monitoramentoYear}</h3>
-                    ${renderTabelaVendas(vendasPorMes[mes])}
-                </div>
-            `;
-        }
+        const temRegistros = vendasPorMes[mes].length > 0;
+        if (temRegistros) temAlgumRegistro = true;
+        
+        html += `
+            <div class="card">
+                <h3 class="month-section-title">${meses[mes]} ${monitoramentoYear}</h3>
+                ${temRegistros ? renderTabelaVendas(vendasPorMes[mes]) : '<p style="text-align: center; padding: 1rem; color: var(--text-secondary); font-style: italic;">Nenhum registro neste mês</p>'}
+            </div>
+        `;
     }
 
-    if (html === '') {
-        html = '<div class="card"><p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma venda encontrada</p></div>';
+    if (!temAlgumRegistro && (searchTerm || filterVendedor || filterStatus)) {
+        html = '<div class="card"><p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma venda encontrada com os filtros aplicados</p></div>';
     }
 
     container.innerHTML = html;
