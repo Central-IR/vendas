@@ -11,7 +11,7 @@ let isOnline = false;
 let lastDataHash = '';
 let sessionToken = null;
 let currentYear = new Date().getFullYear();
-let monitoramentoYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
 let currentView = 'painel';
 
 const meses = [
@@ -67,24 +67,32 @@ window.nextYear = function() {
 };
 
 // ============================================
-// NAVEGAÇÃO POR ANOS - MONITORAMENTO
+// NAVEGAÇÃO POR MESES - MONITORAMENTO
 // ============================================
-function updateMonitoramentoYearDisplay() {
-    const display = document.getElementById('monitoramentoYearDisplay');
+function updateMonthDisplay() {
+    const display = document.getElementById('currentMonthDisplay');
     if (display) {
-        display.textContent = monitoramentoYear;
+        display.textContent = `${meses[currentMonth]} ${currentYear}`;
     }
 }
 
-window.previousYearMonitoramento = function() {
-    monitoramentoYear--;
-    updateMonitoramentoYearDisplay();
+window.previousMonth = function() {
+    currentMonth--;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    updateMonthDisplay();
     renderMonitoramento();
 };
 
-window.nextYearMonitoramento = function() {
-    monitoramentoYear++;
-    updateMonitoramentoYearDisplay();
+window.nextMonth = function() {
+    currentMonth++;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+    updateMonthDisplay();
     renderMonitoramento();
 };
 
@@ -123,7 +131,7 @@ function mostrarTelaAcessoNegado(mensagem = 'NÃO AUTORIZADO') {
 
 function inicializarApp() {
     updateYearDisplay();
-    updateMonitoramentoYearDisplay();
+    updateMonthDisplay();
     checkServerStatus();
     setInterval(checkServerStatus, 15000);
     startPolling();
@@ -374,7 +382,7 @@ function gerarDashboardHTML(titulo, stats) {
 }
 
 // ============================================
-// MONITORAMENTO - SEPARADO POR MÊS DE EMISSÃO
+// MONITORAMENTO - LISTA DO MÊS SELECIONADO
 // ============================================
 window.renderMonitoramento = function() {
     const container = document.getElementById('monitoramentoContainer');
@@ -384,10 +392,10 @@ window.renderMonitoramento = function() {
     const filterVendedor = document.getElementById('filterVendedor')?.value || '';
     const filterStatus = document.getElementById('filterStatus')?.value || '';
 
-    // Filtrar vendas do ano selecionado (por data de EMISSÃO)
+    // Filtrar vendas do MÊS selecionado (por data de EMISSÃO)
     let vendasFiltradas = vendas.filter(v => {
         const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
-        return dataEmissao.getFullYear() === monitoramentoYear;
+        return dataEmissao.getMonth() === currentMonth && dataEmissao.getFullYear() === currentYear;
     });
 
     // Aplicar filtros
@@ -411,40 +419,21 @@ window.renderMonitoramento = function() {
         );
     }
 
-    // Agrupar por mês de EMISSÃO
-    const vendasPorMes = {};
-    for (let mes = 0; mes < 12; mes++) {
-        vendasPorMes[mes] = [];
-    }
-
-    vendasFiltradas.forEach(v => {
-        const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
-        const mes = dataEmissao.getMonth();
-        vendasPorMes[mes].push(v);
+    // Ordenar em ordem CRESCENTE (mais antiga primeiro)
+    vendasFiltradas.sort((a, b) => {
+        return new Date(a.data_emissao) - new Date(b.data_emissao);
     });
 
-    // Ordenar cada mês em ordem CRESCENTE (mais antiga primeiro)
-    for (let mes = 0; mes < 12; mes++) {
-        vendasPorMes[mes].sort((a, b) => {
-            return new Date(a.data_emissao) - new Date(b.data_emissao);
-        });
+    // Renderizar em um único card
+    if (vendasFiltradas.length > 0) {
+        container.innerHTML = `
+            <div class="card">
+                ${renderTabelaVendas(vendasFiltradas)}
+            </div>
+        `;
+    } else {
+        container.innerHTML = '<div class="card"><p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma venda encontrada neste período</p></div>';
     }
-
-    // Renderizar APENAS os meses que TÊM registros
-    let html = '';
-    for (let mes = 0; mes < 12; mes++) {
-        if (vendasPorMes[mes].length > 0) {
-            html += `
-                <div class="card">
-                    <h3 class="month-section-title">${meses[mes]} ${monitoramentoYear}</h3>
-                    ${renderTabelaVendas(vendasPorMes[mes])}
-                </div>
-            `;
-        }
-    }
-
-    // Se não houver NENHUM registro, container fica vazio
-    container.innerHTML = html;
 };
 
 function renderTabelaVendas(vendas) {
