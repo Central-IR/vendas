@@ -537,6 +537,49 @@ tbody tr:hover { background: var(--table-hover); }
     border-bottom: 2px solid var(--border-color);
 }
 
+/* NAVEGAÇÃO POR MESES */
+.month-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1.5rem 0;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.month-display {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+    text-align: center;
+    min-width: 250px;
+}
+
+.month-nav-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(204, 112, 0, 0.3);
+}
+
+.month-nav-btn:hover {
+    background: #E68200;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(204, 112, 0, 0.4);
+}
+
+.month-nav-btn:active {
+    transform: translateY(0);
+}
+
 /* BOTÃO FLUTUANTE */
 .floating-add-btn {
     position: fixed;
