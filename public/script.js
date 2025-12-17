@@ -384,11 +384,13 @@ window.renderMonitoramento = function() {
     const filterVendedor = document.getElementById('filterVendedor')?.value || '';
     const filterStatus = document.getElementById('filterStatus')?.value || '';
 
+    // Filtrar vendas do ano selecionado (por data de EMISSÃO)
     let vendasFiltradas = vendas.filter(v => {
         const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
         return dataEmissao.getFullYear() === monitoramentoYear;
     });
 
+    // Aplicar filtros
     if (filterVendedor) {
         vendasFiltradas = vendasFiltradas.filter(v => v.vendedor === filterVendedor);
     }
@@ -421,31 +423,29 @@ window.renderMonitoramento = function() {
         vendasPorMes[mes].push(v);
     });
 
-    // Ordenar cada mês em ordem CRESCENTE
+    // Ordenar cada mês em ordem CRESCENTE (mais antiga primeiro)
     for (let mes = 0; mes < 12; mes++) {
         vendasPorMes[mes].sort((a, b) => {
             return new Date(a.data_emissao) - new Date(b.data_emissao);
         });
     }
 
-    // Renderizar TODOS OS MESES (mesmo vazios)
+    // Renderizar APENAS os meses que TÊM registros
     let html = '';
-    let temAlgumRegistro = false;
-    
     for (let mes = 0; mes < 12; mes++) {
-        const temRegistros = vendasPorMes[mes].length > 0;
-        if (temRegistros) temAlgumRegistro = true;
-        
-        html += `
-            <div class="card">
-                <h3 class="month-section-title">${meses[mes]} ${monitoramentoYear}</h3>
-                ${temRegistros ? renderTabelaVendas(vendasPorMes[mes]) : '<p style="text-align: center; padding: 1rem; color: var(--text-secondary); font-style: italic;">Nenhum registro neste mês</p>'}
-            </div>
-        `;
+        if (vendasPorMes[mes].length > 0) {
+            html += `
+                <div class="card">
+                    <h3 class="month-section-title">${meses[mes]} ${monitoramentoYear}</h3>
+                    ${renderTabelaVendas(vendasPorMes[mes])}
+                </div>
+            `;
+        }
     }
 
-    if (!temAlgumRegistro && (searchTerm || filterVendedor || filterStatus)) {
-        html = '<div class="card"><p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma venda encontrada com os filtros aplicados</p></div>';
+    // Se não houver nenhum registro
+    if (html === '') {
+        html = '<div class="card"><p style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhuma venda encontrada neste ano</p></div>';
     }
 
     container.innerHTML = html;
