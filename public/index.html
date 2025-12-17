@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendas</title>
+    <link rel="icon" type="image/png" href="I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-PRETO.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <h1 class="splash-title">Vendas</h1>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="app-content">
+        <div class="container">
+            <div class="header">
+                <h1>Vendas</h1>
+                <div id="connectionStatus" class="connection-status offline">
+                    <span class="status-dot"></span>
+                </div>
+            </div>
+
+            <!-- NAVEGAÇÃO PRINCIPAL: PAINEL DE VENDAS vs MONITORAMENTO -->
+            <div class="card">
+                <div class="main-navigation">
+                    <button onclick="switchMainView('painel')" class="main-nav-btn active" id="btnPainel">Painel de Vendas</button>
+                    <button onclick="switchMainView('monitoramento')" class="main-nav-btn" id="btnMonitoramento">Monitoramento</button>
+                </div>
+            </div>
+
+            <!-- ========================================
+                 PAINEL DE VENDAS
+                 ======================================== -->
+            <div id="painelVendas" class="main-view">
+                <!-- NAVEGAÇÃO POR ANOS -->
+                <div class="card">
+                    <div class="year-navigation">
+                        <button onclick="previousYear()" class="year-nav-btn">◄ Ano Anterior</button>
+                        <h2 id="currentYearDisplay" class="year-display">2024</h2>
+                        <button onclick="nextYear()" class="year-nav-btn">Próximo Ano ►</button>
+                    </div>
+                </div>
+
+                <!-- TODOS OS DASHBOARDS DOS MESES -->
+                <div id="dashboardsContainer"></div>
+            </div>
+
+            <!-- ========================================
+                 MONITORAMENTO
+                 ======================================== -->
+            <div id="monitoramento" class="main-view" style="display: none;">
+                <!-- NAVEGAÇÃO POR ANOS NO MONITORAMENTO -->
+                <div class="card">
+                    <div class="year-navigation">
+                        <button onclick="previousYearMonitoramento()" class="year-nav-btn">◄ Ano Anterior</button>
+                        <h2 id="monitoramentoYearDisplay" class="year-display">2024</h2>
+                        <button onclick="nextYearMonitoramento()" class="year-nav-btn">Próximo Ano ►</button>
+                    </div>
+                </div>
+
+                <!-- FILTROS -->
+                <div class="card">
+                    <div class="filter-section">
+                        <div class="form-group">
+                            <label for="search">Pesquisar</label>
+                            <input type="text" id="search" placeholder="NF, órgão, cidade..." oninput="renderMonitoramento()">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterVendedor">Vendedor</label>
+                            <select id="filterVendedor" onchange="renderMonitoramento()">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="filterStatus">Status de Pagamento</label>
+                            <select id="filterStatus" onchange="renderMonitoramento()">
+                                <option value="">Todos</option>
+                                <option value="PAGO">Pago</option>
+                                <option value="PENDENTE">Pendente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REGISTROS SEPARADOS POR MÊS DE EMISSÃO -->
+                <div id="monitoramentoContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTÃO DE SINCRONIZAÇÃO FLUTUANTE -->
+    <button onclick="syncData()" class="floating-add-btn" title="Sincronizar Dados" id="syncBtn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+    </button>
+
+    <script>
+        setTimeout(() => {
+            const splash = document.getElementById('splashScreen');
+            if (splash) splash.style.display = 'none';
+        }, 3000);
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
