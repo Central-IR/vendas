@@ -150,7 +150,7 @@ function gerarRelatorioMes() {
     // Atualizar título do modal
     const tituloElem = document.getElementById('relatorioModalTitulo');
     if (tituloElem) {
-        tituloElem.textContent = `Relatório de Pagamentos - ${vendedorSelecionado} - ${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+        tituloElem.textContent = `${vendedorSelecionado} - ${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
     }
     
     // Filtrar apenas vendas pagas do mês atual e do vendedor selecionado
