@@ -9,11 +9,16 @@ const PORT = process.env.PORT || 10000;
 // Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_SERVICE_ROLE_KEY
 );
 
-// Middleware
-app.use(cors());
+// Middleware CORS configurado corretamente
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'X-Session-Token', 'Accept'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -69,6 +74,7 @@ async function syncVendas() {
           numero_nf: numero_nf,
           origem: 'CONTAS_RECEBER',
           data_emissao: conta.data_emissao,
+          data_entrega: conta.data_entrega,
           valor_nf: conta.valor,
           tipo_nf: conta.tipo_nf,
           nome_orgao: conta.orgao,
@@ -92,6 +98,7 @@ async function syncVendas() {
               numero_nf: frete.numero_nf,
               origem: 'CONTROLE_FRETE',
               data_emissao: frete.data_emissao,
+              data_entrega: frete.data_entrega,
               valor_nf: frete.valor_nf,
               tipo_nf: frete.tipo_nf,
               nome_orgao: frete.nome_orgao,
@@ -139,6 +146,11 @@ async function syncVendas() {
 
 // API Endpoints
 
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // GET /api/sync - Sincronizar dados
 app.get('/api/sync', async (req, res) => {
   try {
@@ -149,10 +161,29 @@ app.get('/api/sync', async (req, res) => {
   }
 });
 
-// GET /api/vendas - Listar todas as vendas
-app.get('/api/vendas', async (req, res) => {
+// GET /api/vendas-consolidadas - ENDPOINT CORRETO
+app.get('/api/vendas-consolidadas', async (req, res) => {
   try {
     // Sincronizar antes de buscar
+    await syncVendas();
+
+    const { data, error } = await supabase
+      .from('vendas')
+      .select('*')
+      .order('numero_nf', { ascending: true });
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Erro ao buscar vendas:', error);
+    res.status(500).json({ error: error.message, details: 'Erro ao buscar vendas consolidadas' });
+  }
+});
+
+// GET /api/vendas - Alias do endpoint principal
+app.get('/api/vendas', async (req, res) => {
+  try {
     await syncVendas();
 
     const { data, error } = await supabase
@@ -212,11 +243,6 @@ app.get('/api/dashboard', async (req, res) => {
   }
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
 // Sincronização automática a cada 5 minutos
 setInterval(async () => {
   try {
@@ -233,4 +259,10 @@ syncVendas().catch(console.error);
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📊 Vendas Consolidada - Sistema de Monitoramento`);
+  console.log(`🔗 Endpoints disponíveis:`);
+  console.log(`   GET /api/health`);
+  console.log(`   GET /api/vendas-consolidadas`);
+  console.log(`   GET /api/vendas`);
+  console.log(`   GET /api/sync`);
+  console.log(`   GET /api/dashboard`);
 });
