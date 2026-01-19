@@ -1,7 +1,7 @@
 // ============================================
 // CONFIGURAÇÃO
 // ============================================
-const DEVELOPMENT_MODE = false; // PRODUÇÃO
+const DEVELOPMENT_MODE = false;
 const API_URL = window.location.origin + '/api';
 const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com';
 
@@ -15,20 +15,17 @@ let currentVendedorModal = 'ROBERTO';
 
 console.log('🚀 Vendas Consolidada iniciada');
 console.log('📍 API URL:', API_URL);
-console.log('🔧 Modo desenvolvimento:', DEVELOPMENT_MODE);
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     if (DEVELOPMENT_MODE) {
-        console.log('⚠️ MODO DESENVOLVIMENTO');
         sessionToken = 'dev-mode';
     } else {
         const urlParams = new URLSearchParams(window.location.search);
         sessionToken = urlParams.get('sessionToken') || sessionStorage.getItem('vendasSession');
         
         if (!sessionToken) {
-            console.log('⚠️ Sem token de sessão - continuando sem autenticação');
-            sessionToken = 'no-auth'; // Continua mesmo sem token
+            sessionToken = 'no-auth';
         }
         
         if (urlParams.get('sessionToken')) {
@@ -114,7 +111,7 @@ function selectMonth(monthIndex) {
 }
 
 // ============================================
-// MODAL VALOR PAGO POR MÊS COM NAVEGAÇÃO DE VENDEDORES
+// MODAL VALOR PAGO POR MÊS - ESTILO SIMPLES
 // ============================================
 window.showValorPagoModal = function() {
     const modal = document.getElementById('valorPagoModal');
@@ -142,7 +139,7 @@ function renderValorPagoModal() {
     const dadosPorMes = {};
     
     monthNames.forEach((_, idx) => {
-        dadosPorMes[idx] = { valor: 0, comissao: 0 };
+        dadosPorMes[idx] = { vendas: 0, comissao: 0 };
     });
     
     allVendas.forEach(v => {
@@ -152,16 +149,15 @@ function renderValorPagoModal() {
         const dataPagamento = new Date(v.data_pagamento + 'T00:00:00');
         const ano = dataPagamento.getFullYear();
         
-        // Apenas considerar o ano atual do modal (ano do mês selecionado)
         if (ano !== currentMonth.getFullYear()) return;
         
         const mes = dataPagamento.getMonth();
         const valor = parseFloat(v.valor_nf) || 0;
-        dadosPorMes[mes].valor += valor;
-        dadosPorMes[mes].comissao = dadosPorMes[mes].valor * 0.01; // 1% de comissão
+        dadosPorMes[mes].vendas += valor;
+        dadosPorMes[mes].comissao = dadosPorMes[mes].vendas * 0.01;
     });
     
-    // HTML da navegação de vendedores e grid de meses
+    // HTML da navegação de vendedores e grid de meses SIMPLES
     const vendedores = ['ROBERTO', 'ISAQUE', 'MIGUEL'];
     const currentIndex = vendedores.indexOf(currentVendedorModal);
     const prevVendedor = vendedores[(currentIndex - 1 + vendedores.length) % vendedores.length];
@@ -188,60 +184,74 @@ function renderValorPagoModal() {
             </button>
         </div>
         
-        <div class="month-cards-grid">
+        <div class="valores-container-semestral">
+            <div class="semestre-row">
     `;
     
     // Primeira linha - Jan a Jun
     monthNames.slice(0, 6).forEach((nome, idx) => {
         const dados = dadosPorMes[idx];
-        const temValor = dados.valor > 0;
         
         html += `
-            <div class="month-card ${!temValor ? 'empty' : ''}">
-                <div class="month-name">${nome.substring(0, 3).toUpperCase()}</div>
-                <div class="month-values">
-                    <div class="valor-total">${formatCurrency(dados.valor)}</div>
-                    <div class="valor-secundario">${formatCurrency(dados.comissao)}</div>
+            <div class="valor-mes-card-simple">
+                <div class="mes-nome">${nome.substring(0, 3).toUpperCase()}</div>
+                <div class="mes-valores">
+                    <div class="mes-valor-item">
+                        <span class="valor-num">${formatCurrency(dados.vendas)}</span>
+                    </div>
+                    <div class="mes-valor-item">
+                        <span class="valor-num">${formatCurrency(dados.comissao)}</span>
+                    </div>
                 </div>
             </div>
         `;
     });
     
-    html += '</div><div class="month-cards-grid">';
+    html += '</div><div class="semestre-row">';
     
     // Segunda linha - Jul a Dez
     monthNames.slice(6, 12).forEach((nome, idx) => {
         const dados = dadosPorMes[idx + 6];
-        const temValor = dados.valor > 0;
         
         html += `
-            <div class="month-card ${!temValor ? 'empty' : ''}">
-                <div class="month-name">${nome.substring(0, 3).toUpperCase()}</div>
-                <div class="month-values">
-                    <div class="valor-total">${formatCurrency(dados.valor)}</div>
-                    <div class="valor-secundario">${formatCurrency(dados.comissao)}</div>
+            <div class="valor-mes-card-simple">
+                <div class="mes-nome">${nome.substring(0, 3).toUpperCase()}</div>
+                <div class="mes-valores">
+                    <div class="mes-valor-item">
+                        <span class="valor-num">${formatCurrency(dados.vendas)}</span>
+                    </div>
+                    <div class="mes-valor-item">
+                        <span class="valor-num">${formatCurrency(dados.comissao)}</span>
+                    </div>
                 </div>
             </div>
         `;
     });
     
-    html += '</div>';
+    html += '</div></div>';
     
-    // Totais
-    const totalAnual = Object.values(dadosPorMes).reduce((sum, d) => sum + d.valor, 0);
-    const comissaoAnual = totalAnual * 0.01;
+    // Totais SIMPLES
+    const vendasTotal = Object.values(dadosPorMes).reduce((sum, d) => sum + d.vendas, 0);
+    const comissaoTotal = vendasTotal * 0.01;
+    
+    // Calcular faturamento total do ano para o vendedor
+    const faturamentoTotal = allVendas
+        .filter(v => {
+            if (v.vendedor !== currentVendedorModal) return false;
+            const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
+            return dataEmissao.getFullYear() === currentMonth.getFullYear();
+        })
+        .reduce((sum, v) => sum + (parseFloat(v.valor_nf) || 0), 0);
     
     html += `
-        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid rgba(204, 112, 0, 0.3);">
-            <div style="display: flex; justify-content: space-between; gap: 1rem;">
-                <div style="flex: 1; padding: 1.5rem; background: rgba(204, 112, 0, 0.1); border-radius: 12px; border: 2px solid rgba(204, 112, 0, 0.3);">
-                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">Valor Total</div>
-                    <div style="font-size: 2rem; font-weight: 700; color: #CC7000;">${formatCurrency(totalAnual)}</div>
-                </div>
-                <div style="flex: 1; padding: 1.5rem; background: rgba(34, 197, 94, 0.1); border-radius: 12px; border: 2px solid rgba(34, 197, 94, 0.3);">
-                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">Comissão Total</div>
-                    <div style="font-size: 2rem; font-weight: 700; color: #22C55E;">${formatCurrency(comissaoAnual)}</div>
-                </div>
+        <div class="valores-totais-simple">
+            <div class="total-box vendas-total-box">
+                <div class="total-label-simple">VENDAS TOTAL</div>
+                <div class="total-value-simple" style="color: #3B82F6;">${formatCurrency(vendasTotal)}</div>
+            </div>
+            <div class="total-box faturamento-total-box">
+                <div class="total-label-simple">FATURAMENTO TOTAL</div>
+                <div class="total-value-simple" style="color: #22C55E;">${formatCurrency(faturamentoTotal)}</div>
             </div>
         </div>
     `;
@@ -315,7 +325,7 @@ window.gerarPDF = function() {
         startY: 55,
         head: [['NF', 'Emissão', 'Data Pagamento', 'Valor']],
         body: tableData,
-        foot: [['', '', '', 'TOTAL:', formatCurrency(totalPago)]],
+        foot: [['', '', 'TOTAL:', formatCurrency(totalPago)]],
         theme: 'grid',
         headStyles: {
             fillColor: [100, 100, 100],
@@ -446,18 +456,23 @@ function loadDashboard() {
         const valor = parseFloat(v.valor_nf) || 0;
         totalFaturado += valor;
         
-        if (v.origem === 'CONTAS_RECEBER' && v.data_pagamento) {
+        // LÓGICA CORRIGIDA:
+        // - Todo ENTREGUE soma em A RECEBER
+        // - Todo PAGO desconta de A RECEBER e vai para PAGO
+        if (v.origem === 'CONTROLE_FRETE' && v.status_frete === 'ENTREGUE') {
+            totalAReceber += valor;
+            totalEntregue++;
+        } else if (v.origem === 'CONTAS_RECEBER' && v.data_pagamento) {
             totalPago += valor;
+            totalAReceber -= valor; // Desconta do A Receber
+            totalEntregue++;
         } else if (v.origem === 'CONTAS_RECEBER' && !v.data_pagamento) {
             totalAReceber += valor;
         }
-        
-        if (v.origem === 'CONTROLE_FRETE' && v.status_frete === 'ENTREGUE') {
-            totalEntregue++;
-        } else if (v.origem === 'CONTAS_RECEBER' && v.data_pagamento) {
-            totalEntregue++;
-        }
     });
+    
+    // Garante que A Receber não fique negativo
+    totalAReceber = Math.max(0, totalAReceber);
     
     document.getElementById('totalPago').textContent = formatCurrency(totalPago);
     document.getElementById('totalAReceber').textContent = formatCurrency(totalAReceber);
@@ -466,7 +481,7 @@ function loadDashboard() {
 }
 
 // ============================================
-// RENDERIZAÇÃO DA TABELA (IGUAL AO CONTROLE DE FRETE)
+// RENDERIZAÇÃO DA TABELA
 // ============================================
 function updateTable() {
     const container = document.getElementById('vendasContainer');
@@ -483,7 +498,6 @@ function updateTable() {
     
     let filteredVendas = [...monthVendas];
     
-    // Filtrar por vendedor
     if (vendedorSelecionado) {
         filteredVendas = filteredVendas.filter(v => v.vendedor === vendedorSelecionado);
     }
@@ -509,7 +523,6 @@ function updateTable() {
         });
     }
     
-    // ORDENAR POR NÚMERO DE NF (CRESCENTE)
     filteredVendas.sort((a, b) => {
         const nfA = parseInt(a.numero_nf) || 0;
         const nfB = parseInt(b.numero_nf) || 0;
@@ -521,7 +534,6 @@ function updateTable() {
         return;
     }
     
-    // Renderizar tabela igual ao Controle de Frete
     const table = `
         <div style="overflow-x: auto;">
             <table>
@@ -546,7 +558,7 @@ function updateTable() {
                         <tr class="${rowClass}">
                             <td><strong>${venda.numero_nf}</strong></td>
                             <td style="white-space: nowrap;">${formatDate(venda.data_emissao)}</td>
-                            <td><span class="badge badge-vendedor">${venda.vendedor}</span></td>
+                            <td>${venda.vendedor}</td>
                             <td style="max-width: 200px; word-wrap: break-word; white-space: normal;">${venda.nome_orgao}</td>
                             <td><strong>${formatCurrency(venda.valor_nf)}</strong></td>
                             <td>${getStatusBadge(status)}</td>
@@ -621,7 +633,7 @@ function viewVenda(id) {
             <div class="info-section">
                 <h4>Informações da Conta</h4>
                 <p><strong>Número NF:</strong> ${venda.numero_nf}</p>
-                <p><strong>Vendedor:</strong> <span class="badge badge-vendedor">${venda.vendedor}</span></p>
+                <p><strong>Vendedor:</strong> ${venda.vendedor}</p>
                 <p><strong>Órgão:</strong> ${venda.nome_orgao}</p>
                 <p><strong>Valor:</strong> ${formatCurrency(venda.valor_nf)}</p>
                 <p><strong>Data Emissão:</strong> ${formatDate(venda.data_emissao)}</p>
@@ -637,7 +649,7 @@ function viewVenda(id) {
             <div class="info-section">
                 <h4>Informações do Frete</h4>
                 <p><strong>Número NF:</strong> ${venda.numero_nf}</p>
-                <p><strong>Vendedor:</strong> <span class="badge badge-vendedor">${venda.vendedor}</span></p>
+                <p><strong>Vendedor:</strong> ${venda.vendedor}</p>
                 <p><strong>Órgão:</strong> ${venda.nome_orgao}</p>
                 <p><strong>Valor NF:</strong> ${formatCurrency(venda.valor_nf)}</p>
                 <p><strong>Data Emissão:</strong> ${formatDate(venda.data_emissao)}</p>
