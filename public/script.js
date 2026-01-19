@@ -1,6 +1,9 @@
+// ============================================
+// CONFIGURAÇÃO
+// ============================================
+const DEVELOPMENT_MODE = false; // PRODUÇÃO
 const API_URL = window.location.origin + '/api';
 const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com';
-const DEVELOPMENT_MODE = true;
 
 let isOnline = false;
 let lastDataHash = '';
@@ -8,22 +11,24 @@ let currentMonth = new Date();
 let allVendas = [];
 let sessionToken = null;
 let calendarYear = new Date().getFullYear();
-let currentVendedorModal = 'ROBERTO'; // Vendedor inicial para o modal
+let currentVendedorModal = 'ROBERTO';
 
 console.log('🚀 Vendas Consolidada iniciada');
 console.log('📍 API URL:', API_URL);
+console.log('🔧 Modo desenvolvimento:', DEVELOPMENT_MODE);
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     if (DEVELOPMENT_MODE) {
+        console.log('⚠️ MODO DESENVOLVIMENTO');
         sessionToken = 'dev-mode';
     } else {
         const urlParams = new URLSearchParams(window.location.search);
         sessionToken = urlParams.get('sessionToken') || sessionStorage.getItem('vendasSession');
         
         if (!sessionToken) {
-            mostrarMensagemNaoAutorizado();
-            return;
+            console.log('⚠️ Sem token de sessão - continuando sem autenticação');
+            sessionToken = 'no-auth'; // Continua mesmo sem token
         }
         
         if (urlParams.get('sessionToken')) {
@@ -33,16 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     inicializarApp();
 });
-
-function mostrarMensagemNaoAutorizado() {
-    document.body.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #1a1a1a; color: white; text-align: center; padding: 2rem;">
-            <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #CC7000;">NÃO AUTORIZADO</h1>
-            <p style="font-size: 1.2rem; color: #999; margin-bottom: 2rem;">Acesso restrito. Por favor, faça login no portal.</p>
-            <a href="${PORTAL_URL}" style="background: #CC7000; color: white; padding: 1rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem;">Ir para o Portal</a>
-        </div>
-    `;
-}
 
 function inicializarApp() {
     checkServerStatus();
@@ -380,9 +375,11 @@ async function checkServerStatus() {
         }
         
         if (wasOffline && isOnline) {
+            console.log('✅ Conexão restaurada');
             await loadVendas();
         }
     } catch (error) {
+        console.error('❌ Erro ao verificar status do servidor:', error);
         isOnline = false;
         const statusElem = document.getElementById('connectionStatus');
         if (statusElem) {
@@ -394,24 +391,24 @@ async function checkServerStatus() {
 
 async function loadVendas() {
     try {
+        console.log('🔄 Carregando vendas...');
+        
         const response = await fetch(`${API_URL}/vendas-consolidadas`, {
+            method: 'GET',
             headers: {
+                'Content-Type': 'application/json',
                 'X-Session-Token': sessionToken
             },
             mode: 'cors'
         });
         
-        if (!DEVELOPMENT_MODE && response.status === 401) {
-            sessionStorage.removeItem('vendasSession');
-            mostrarMensagemNaoAutorizado();
-            return;
-        }
-        
         if (!response.ok) {
-            throw new Error('Erro ao carregar vendas');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log(`✅ ${data.length} vendas carregadas`);
+        
         const newHash = JSON.stringify(data.map(v => v.id));
         
         if (newHash !== lastDataHash) {
@@ -420,7 +417,8 @@ async function loadVendas() {
             updateDisplay();
         }
     } catch (error) {
-        console.error('Erro ao carregar vendas:', error);
+        console.error('❌ Erro ao carregar vendas:', error);
+        showToast('Erro ao carregar dados', 'error');
     }
 }
 
