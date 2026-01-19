@@ -74,7 +74,6 @@ async function syncVendas() {
           numero_nf: numero_nf,
           origem: 'CONTAS_RECEBER',
           data_emissao: conta.data_emissao,
-          data_entrega: conta.data_entrega,
           valor_nf: conta.valor,
           tipo_nf: conta.tipo_nf,
           nome_orgao: conta.orgao,
@@ -98,7 +97,6 @@ async function syncVendas() {
               numero_nf: frete.numero_nf,
               origem: 'CONTROLE_FRETE',
               data_emissao: frete.data_emissao,
-              data_entrega: frete.data_entrega,
               valor_nf: frete.valor_nf,
               tipo_nf: frete.tipo_nf,
               nome_orgao: frete.nome_orgao,
@@ -125,17 +123,26 @@ async function syncVendas() {
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000'); // Deleta todos
 
-    if (deleteError) console.error('Erro ao limpar tabela:', deleteError);
-
-    if (registrosParaInserir.length > 0) {
-      const { error: insertError } = await supabase
-        .from('vendas')
-        .insert(registrosParaInserir);
-
-      if (insertError) throw insertError;
+    if (deleteError) {
+      console.error('Erro ao limpar tabela:', deleteError);
     }
 
-    console.log(`✅ Sincronização concluída: ${registrosParaInserir.length} registros`);
+    if (registrosParaInserir.length > 0) {
+      const { data: insertedData, error: insertError } = await supabase
+        .from('vendas')
+        .insert(registrosParaInserir)
+        .select();
+
+      if (insertError) {
+        console.error('❌ Erro ao inserir dados:', insertError);
+        throw insertError;
+      }
+
+      console.log(`✅ Sincronização concluída: ${insertedData?.length || registrosParaInserir.length} registros`);
+    } else {
+      console.log('⚠️ Nenhum registro para inserir');
+    }
+
     return { success: true, count: registrosParaInserir.length };
 
   } catch (error) {
@@ -164,6 +171,8 @@ app.get('/api/sync', async (req, res) => {
 // GET /api/vendas-consolidadas - ENDPOINT CORRETO
 app.get('/api/vendas-consolidadas', async (req, res) => {
   try {
+    console.log('📊 Buscando vendas consolidadas...');
+    
     // Sincronizar antes de buscar
     await syncVendas();
 
@@ -172,12 +181,20 @@ app.get('/api/vendas-consolidadas', async (req, res) => {
       .select('*')
       .order('numero_nf', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Erro ao buscar vendas:', error);
+      throw error;
+    }
 
+    console.log(`✅ ${data?.length || 0} vendas retornadas`);
     res.json(data || []);
   } catch (error) {
-    console.error('Erro ao buscar vendas:', error);
-    res.status(500).json({ error: error.message, details: 'Erro ao buscar vendas consolidadas' });
+    console.error('❌ Erro ao buscar vendas:', error);
+    res.status(500).json({ 
+      error: error.message, 
+      details: 'Erro ao buscar vendas consolidadas',
+      code: error.code 
+    });
   }
 });
 
@@ -246,6 +263,7 @@ app.get('/api/dashboard', async (req, res) => {
 // Sincronização automática a cada 5 minutos
 setInterval(async () => {
   try {
+    console.log('🔄 Sincronização automática iniciada...');
     await syncVendas();
   } catch (error) {
     console.error('Erro na sincronização automática:', error);
@@ -253,7 +271,10 @@ setInterval(async () => {
 }, 5 * 60 * 1000);
 
 // Sincronização inicial
-syncVendas().catch(console.error);
+console.log('🚀 Iniciando sincronização inicial...');
+syncVendas().catch(error => {
+  console.error('❌ Erro na sincronização inicial:', error);
+});
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
