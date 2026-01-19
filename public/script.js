@@ -303,7 +303,6 @@ window.gerarPDF = function() {
     const tableData = vendasPagas.map(v => [
         v.numero_nf,
         formatDate(v.data_emissao),
-        formatDate(v.data_entrega || '-'),
         formatDate(v.data_pagamento),
         formatCurrency(v.valor_nf)
     ]);
@@ -314,7 +313,7 @@ window.gerarPDF = function() {
     // Adicionar tabela
     doc.autoTable({
         startY: 55,
-        head: [['NF', 'Emissão', 'Entrega', 'Data Pagamento', 'Valor']],
+        head: [['NF', 'Emissão', 'Data Pagamento', 'Valor']],
         body: tableData,
         foot: [['', '', '', 'TOTAL:', formatCurrency(totalPago)]],
         theme: 'grid',
@@ -338,8 +337,7 @@ window.gerarPDF = function() {
             0: { halign: 'center' },
             1: { halign: 'center' },
             2: { halign: 'center' },
-            3: { halign: 'center' },
-            4: { halign: 'right' }
+            3: { halign: 'right' }
         }
     });
     
