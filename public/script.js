@@ -117,7 +117,7 @@ window.gerarPDF = function() {
     const vendedorSelecionado = filterVendedor ? filterVendedor.value : '';
     
     if (!vendedorSelecionado) {
-        showToast('Selecione um Vendedor para gerar o PDF', 'error');
+        showToast('Selecione um Vendedor', 'error');
         return;
     }
     
@@ -135,7 +135,7 @@ window.gerarPDF = function() {
     });
     
     if (vendasPagas.length === 0) {
-        showToast('Nenhum pagamento encontrado para este vendedor e mês', 'error');
+        showToast('Nenhum pagamento encontrado para este vendedor', 'error');
         return;
     }
     
@@ -199,7 +199,7 @@ window.gerarPDF = function() {
     doc.text(`A RECEBER: ${formatCurrency(comissao)}`, 14, finalY + 7);
     
     // Salvar PDF
-    const fileName = `Pagamentos_${vendedorSelecionado}_${monthNames[currentMonth.getMonth()]}_${currentMonth.getFullYear()}.pdf`;
+    const fileName = `COMISSÃO-${vendedorSelecionado}-${monthNames[currentMonth.getMonth()]}-${currentMonth.getFullYear()}.pdf`;
     doc.save(fileName);
     
     showToast('PDF gerado com sucesso!', 'success');
