@@ -696,22 +696,22 @@ tbody tr:hover {
 
 /* LINHA COM STATUS ENTREGUE - AZUL */
 tbody tr.row-entregue {
-    background: rgba(59, 130, 246, 0.12) !important;
+    background: rgba(59, 130, 246, 0.20) !important;
     border-left: 3px solid #3B82F6;
 }
 
 tbody tr.row-entregue:hover {
-    background: rgba(59, 130, 246, 0.18) !important;
+    background: rgba(59, 130, 246, 0.28) !important;
 }
 
 /* LINHA COM STATUS PAGO - VERDE */
 tbody tr.row-pago {
-    background: rgba(34, 197, 94, 0.12) !important;
+    background: rgba(34, 197, 94, 0.20) !important;
     border-left: 3px solid #22C55E;
 }
 
 tbody tr.row-pago:hover {
-    background: rgba(34, 197, 94, 0.18) !important;
+    background: rgba(34, 197, 94, 0.28) !important;
 }
 
 /* Checkbox Customizado */
