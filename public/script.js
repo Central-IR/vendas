@@ -11,7 +11,6 @@ let currentMonth = new Date();
 let allVendas = [];
 let sessionToken = null;
 let calendarYear = new Date().getFullYear();
-let currentVendedorModal = 'ROBERTO';
 
 console.log('🚀 Vendas Consolidada iniciada');
 console.log('📍 API URL:', API_URL);
@@ -111,160 +110,6 @@ function selectMonth(monthIndex) {
 }
 
 // ============================================
-// MODAL VALOR PAGO POR MÊS - ESTILO SIMPLES
-// ============================================
-window.showValorPagoModal = function() {
-    const modal = document.getElementById('valorPagoModal');
-    if (!modal) return;
-    
-    renderValorPagoModal();
-    modal.style.display = 'flex';
-};
-
-window.closeValorPagoModal = function() {
-    const modal = document.getElementById('valorPagoModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-};
-
-function renderValorPagoModal() {
-    const bodyElem = document.getElementById('valorPagoModalBody');
-    if (!bodyElem) return;
-    
-    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
-                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    
-    // Calcular valores pagos por mês para o vendedor atual
-    const dadosPorMes = {};
-    
-    monthNames.forEach((_, idx) => {
-        dadosPorMes[idx] = { vendas: 0, comissao: 0 };
-    });
-    
-    allVendas.forEach(v => {
-        if (v.origem !== 'CONTAS_RECEBER' || !v.data_pagamento) return;
-        if (v.vendedor !== currentVendedorModal) return;
-        
-        const dataPagamento = new Date(v.data_pagamento + 'T00:00:00');
-        const ano = dataPagamento.getFullYear();
-        
-        if (ano !== currentMonth.getFullYear()) return;
-        
-        const mes = dataPagamento.getMonth();
-        const valor = parseFloat(v.valor_nf) || 0;
-        dadosPorMes[mes].vendas += valor;
-        dadosPorMes[mes].comissao = dadosPorMes[mes].vendas * 0.01;
-    });
-    
-    // HTML da navegação de vendedores e grid de meses SIMPLES
-    const vendedores = ['ROBERTO', 'ISAQUE', 'MIGUEL'];
-    const currentIndex = vendedores.indexOf(currentVendedorModal);
-    const prevVendedor = vendedores[(currentIndex - 1 + vendedores.length) % vendedores.length];
-    const nextVendedor = vendedores[(currentIndex + 1) % vendedores.length];
-    
-    let html = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 0 1rem;">
-            <button onclick="changeVendedorModal('${prevVendedor}')" 
-                    style="background: none; border: none; color: #CC7000; font-size: 2rem; cursor: pointer; padding: 0.5rem;"
-                    title="Vendedor anterior">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-            </button>
-            
-            <h2 style="color: #CC7000; font-size: 1.8rem; font-weight: 700; margin: 0;">${currentVendedorModal}</h2>
-            
-            <button onclick="changeVendedorModal('${nextVendedor}')" 
-                    style="background: none; border: none; color: #CC7000; font-size: 2rem; cursor: pointer; padding: 0.5rem;"
-                    title="Próximo vendedor">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </button>
-        </div>
-        
-        <div class="valores-container-semestral">
-            <div class="semestre-row">
-    `;
-    
-    // Primeira linha - Jan a Jun
-    monthNames.slice(0, 6).forEach((nome, idx) => {
-        const dados = dadosPorMes[idx];
-        
-        html += `
-            <div class="valor-mes-card-simple">
-                <div class="mes-nome">${nome.substring(0, 3).toUpperCase()}</div>
-                <div class="mes-valores">
-                    <div class="mes-valor-item">
-                        <span class="valor-num">${formatCurrency(dados.vendas)}</span>
-                    </div>
-                    <div class="mes-valor-item">
-                        <span class="valor-num">${formatCurrency(dados.comissao)}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    html += '</div><div class="semestre-row">';
-    
-    // Segunda linha - Jul a Dez
-    monthNames.slice(6, 12).forEach((nome, idx) => {
-        const dados = dadosPorMes[idx + 6];
-        
-        html += `
-            <div class="valor-mes-card-simple">
-                <div class="mes-nome">${nome.substring(0, 3).toUpperCase()}</div>
-                <div class="mes-valores">
-                    <div class="mes-valor-item">
-                        <span class="valor-num">${formatCurrency(dados.vendas)}</span>
-                    </div>
-                    <div class="mes-valor-item">
-                        <span class="valor-num">${formatCurrency(dados.comissao)}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    html += '</div></div>';
-    
-    // Totais SIMPLES
-    const vendasTotal = Object.values(dadosPorMes).reduce((sum, d) => sum + d.vendas, 0);
-    const comissaoTotal = vendasTotal * 0.01;
-    
-    // Calcular faturamento total do ano para o vendedor
-    const faturamentoTotal = allVendas
-        .filter(v => {
-            if (v.vendedor !== currentVendedorModal) return false;
-            const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
-            return dataEmissao.getFullYear() === currentMonth.getFullYear();
-        })
-        .reduce((sum, v) => sum + (parseFloat(v.valor_nf) || 0), 0);
-    
-    html += `
-        <div class="valores-totais-simple">
-            <div class="total-box vendas-total-box">
-                <div class="total-label-simple">VENDAS TOTAL</div>
-                <div class="total-value-simple" style="color: #3B82F6;">${formatCurrency(vendasTotal)}</div>
-            </div>
-            <div class="total-box faturamento-total-box">
-                <div class="total-label-simple">FATURAMENTO TOTAL</div>
-                <div class="total-value-simple" style="color: #22C55E;">${formatCurrency(faturamentoTotal)}</div>
-            </div>
-        </div>
-    `;
-    
-    bodyElem.innerHTML = html;
-}
-
-window.changeVendedorModal = function(novoVendedor) {
-    currentVendedorModal = novoVendedor;
-    renderValorPagoModal();
-};
-
-// ============================================
 // GERAR PDF
 // ============================================
 window.gerarPDF = function() {
@@ -317,27 +162,21 @@ window.gerarPDF = function() {
         formatCurrency(v.valor_nf)
     ]);
     
-    // Calcular total
+    // Calcular total e comissão
     const totalPago = vendasPagas.reduce((sum, v) => sum + (parseFloat(v.valor_nf) || 0), 0);
+    const comissao = totalPago * 0.01;
     
     // Adicionar tabela
     doc.autoTable({
         startY: 55,
         head: [['NF', 'Emissão', 'Data Pagamento', 'Valor']],
         body: tableData,
-        foot: [['', '', 'TOTAL:', formatCurrency(totalPago)]],
         theme: 'grid',
         headStyles: {
             fillColor: [100, 100, 100],
             textColor: [255, 255, 255],
             fontStyle: 'bold',
             halign: 'center'
-        },
-        footStyles: {
-            fillColor: [34, 197, 94],
-            textColor: [255, 255, 255],
-            fontStyle: 'bold',
-            halign: 'right'
         },
         styles: {
             fontSize: 10,
@@ -350,6 +189,14 @@ window.gerarPDF = function() {
             3: { halign: 'right' }
         }
     });
+    
+    // Adicionar totais após a tabela
+    const finalY = doc.lastAutoTable.finalY + 10;
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`TOTAL: ${formatCurrency(totalPago)}`, 105, finalY, { align: 'center' });
+    doc.text(`COMISSÃO (1%): ${formatCurrency(comissao)}`, 105, finalY + 7, { align: 'center' });
     
     // Salvar PDF
     const fileName = `Pagamentos_${vendedorSelecionado}_${monthNames[currentMonth.getMonth()]}_${currentMonth.getFullYear()}.pdf`;
@@ -441,33 +288,30 @@ function updateDisplay() {
 }
 
 function loadDashboard() {
-    let monthVendas = allVendas.filter(v => {
-        const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
-        return dataEmissao.getMonth() === currentMonth.getMonth() && 
-               dataEmissao.getFullYear() === currentMonth.getFullYear();
-    });
-    
+    // CONTABILIZAÇÃO UNIVERSAL - TODOS OS MESES
     let totalPago = 0;
     let totalAReceber = 0;
     let totalEntregue = 0;
     let totalFaturado = 0;
     
-    monthVendas.forEach(v => {
+    allVendas.forEach(v => {
         const valor = parseFloat(v.valor_nf) || 0;
-        totalFaturado += valor;
+        const dataEmissao = new Date(v.data_emissao + 'T00:00:00');
         
-        // LÓGICA CORRIGIDA:
-        // - Todo ENTREGUE soma em A RECEBER
-        // - Todo PAGO desconta de A RECEBER e vai para PAGO
-        if (v.origem === 'CONTROLE_FRETE' && v.status_frete === 'ENTREGUE') {
-            totalAReceber += valor;
-            totalEntregue++;
-        } else if (v.origem === 'CONTAS_RECEBER' && v.data_pagamento) {
-            totalPago += valor;
-            totalAReceber -= valor; // Desconta do A Receber
-            totalEntregue++;
-        } else if (v.origem === 'CONTAS_RECEBER' && !v.data_pagamento) {
-            totalAReceber += valor;
+        // Verifica se é do ano atual
+        if (dataEmissao.getFullYear() === currentMonth.getFullYear()) {
+            totalFaturado += valor;
+            
+            if (v.origem === 'CONTROLE_FRETE' && v.status_frete === 'ENTREGUE') {
+                totalAReceber += valor;
+                totalEntregue++;
+            } else if (v.origem === 'CONTAS_RECEBER' && v.data_pagamento) {
+                totalPago += valor;
+                totalAReceber -= valor;
+                totalEntregue++;
+            } else if (v.origem === 'CONTAS_RECEBER' && !v.data_pagamento) {
+                totalAReceber += valor;
+            }
         }
     });
     
