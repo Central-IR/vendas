@@ -199,7 +199,7 @@ window.gerarPDF = function() {
     doc.text(`A RECEBER: ${formatCurrency(comissao)}`, 14, finalY + 7);
     
     // Salvar PDF
-    const fileName = `COMISSÃO-${vendedorSelecionado}.pdf`;
+    const fileName = `RELATÓRIO DE COMISSÃO-${vendedorSelecionado}.pdf`;
     doc.save(fileName);
     
     showToast('Relatório gerado com sucesso', 'success');
