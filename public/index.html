@@ -26,7 +26,7 @@
 
             <!-- Dashboard Cards -->
             <div class="dashboard-grid">
-                <div class="stat-card stat-card-success" onclick="showValorPagoModal()" style="cursor: pointer;" title="Clique para ver detalhes mensais">
+                <div class="stat-card stat-card-success">
                     <div class="stat-icon stat-icon-success">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"></polyline>
@@ -135,13 +135,6 @@
                             <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
                     </button>
-                    <button class="calendar-btn" onclick="syncData()" title="Sincronizar">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <polyline points="1 20 1 14 7 14"></polyline>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                    </button>
                     <button class="calendar-btn" onclick="gerarPDF()" title="Gerar PDF">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -149,6 +142,13 @@
                             <line x1="16" y1="13" x2="8" y2="13"></line>
                             <line x1="16" y1="17" x2="8" y2="17"></line>
                             <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </button>
+                    <button class="calendar-btn" onclick="syncData()" title="Sincronizar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                         </svg>
                     </button>
                 </div>
@@ -177,17 +177,6 @@
             <!-- Table Card IGUAL AO CONTROLE DE FRETE -->
             <div class="card table-card">
                 <div id="vendasContainer"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL VALOR PAGO POR MÊS -->
-    <div class="modal-overlay" id="valorPagoModal" style="display: none;">
-        <div class="modal-content valor-total-modal">
-            <div class="modal-body-valores" id="valorPagoModalBody"></div>
-
-            <div class="modal-actions-valor-total">
-                <button type="button" onclick="closeValorPagoModal()" class="btn-close-red">Fechar</button>
             </div>
         </div>
     </div>
