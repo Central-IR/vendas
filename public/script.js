@@ -146,7 +146,7 @@ window.gerarPDF = function() {
     // Título
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
-    doc.text('RELATÓRIO DE PAGAMENTOS', 105, 20, { align: 'center' });
+    doc.text('RELATÓRIO DE COMISSÃO', 105, 20, { align: 'center' });
     
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
@@ -199,10 +199,10 @@ window.gerarPDF = function() {
     doc.text(`A RECEBER: ${formatCurrency(comissao)}`, 14, finalY + 7);
     
     // Salvar PDF
-    const fileName = `COMISSÃO-${vendedorSelecionado}-${monthNames[currentMonth.getMonth()]}-${currentMonth.getFullYear()}.pdf`;
+    const fileName = `COMISSÃO-${vendedorSelecionado}.pdf`;
     doc.save(fileName);
     
-    showToast('PDF gerado com sucesso!', 'success');
+    showToast('Relatório gerado com sucesso', 'success');
 };
 
 // ============================================
