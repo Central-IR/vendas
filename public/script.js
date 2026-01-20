@@ -196,7 +196,7 @@ window.gerarPDF = function() {
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.text(`TOTAL: ${formatCurrency(totalPago)}`, 14, finalY);
-    doc.text(`COMISSÃO (1%): ${formatCurrency(comissao)}`, 14, finalY + 7);
+    doc.text(`A RECEBER: ${formatCurrency(comissao)}`, 14, finalY + 7);
     
     // Salvar PDF
     const fileName = `Pagamentos_${vendedorSelecionado}_${monthNames[currentMonth.getMonth()]}_${currentMonth.getFullYear()}.pdf`;
